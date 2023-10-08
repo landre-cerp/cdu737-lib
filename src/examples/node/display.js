@@ -1,38 +1,22 @@
-// HID device
-// const device = new HID(deviceInfo.path);
+import { colors, leds } from '../../lib/cdu.js';
 
 // Full white "dash" 0x47 0x70 0x04
 
-const colors = {
-  white: 0b000,
-  cyan: 0b001,
-  green: 0b010,
-  purple: 0b011,
-  yellow: 0b100,
-  red: 0b101,
-  blue: 0b110,
-  dark_grey: 0b111,
-};
+let fail_LED = false;
 
-const leds = {
-  EXEC: 0b0000001,
-  MSG: 0b0000010,
-  OFST: 0b0000100,
-  FAIL: 0b0001000,
-  CALL: 0b0010000,
-};
-const line = new Uint8Array(64).map(function (v, i) {
-  let val = 0x04 | (colors.blue << 4);
-  if (i % 3 === 1) {
-    val = 0x47;
-  }
-  if (i % 3 === 2) {
-    val = 0x70 | colors.yellow;
-  }
-  return val;
-});
+// This is the "dash" that is displayed on the screen
+// one blue, one yellow, one blue, one yellow, etc...
+// each 63 bytes long ( 1 byte for the line number, 63 bytes for the line )
+// reprsents the 24+19 chars.
+// 43*8 = 344
+// 24*14 = 336
 
-const display = (device) => {
+const twoChars = [0x47, 0x70 | colors.yellow, 0x04 | (colors.blue << 4)];
+
+const chars = [].concat(...Array(21).fill(twoChars));
+const line = [0, ...chars];
+
+const displaySomethingOn = (device) => {
   for (let i = 1; i <= 8; i++) {
     line[0] = i;
     device.write([0, ...line]);
@@ -41,11 +25,18 @@ const display = (device) => {
   const lastLine = new Uint8Array(64);
   lastLine[0] = 9;
 
-  lastLine[1] = 0x70;
-  lastLine[2] = 0x70;
-  lastLine[3] = leds.EXEC | leds.FAIL;
+  lastLine[1] = 0x90;
+  lastLine[2] = 0x90;
+  lastLine[3] = leds.EXEC;
+
+  if (fail_LED) {
+    lastLine[3] |= leds.FAIL;
+  } else {
+    lastLine[3] &= ~leds.FAIL;
+  }
+  fail_LED = !fail_LED;
 
   device.write([0, ...lastLine]);
 };
 
-export default display;
+export default displaySomethingOn;
