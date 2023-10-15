@@ -71,6 +71,8 @@ const cdu = new CDU(
 console.log("Press 'EXEC' to toggle the EXEC led.");
 console.log("Press 'BRT_MINUS' to decrease the brightness.");
 console.log("Press 'BRT_PLUS' to increase the brightness.");
+console.log("Press 'RSK1' to scroll up.");
+console.log("Press 'RSK2' to scroll down.");
 
 const testDisplay = () => {
   cdu.clearScreen();
