@@ -109,3 +109,77 @@ if (cdu) {
   console.log('Device not found.');
 }
 ```
+
+# API
+
+This works only with 1 CDU. I need to make some changes to be able to instantiate several CDU objects ( based on Serial Number)
+
+## CDU
+
+instantiate a CDU object with default values
+
+The minimum you need to instantiate a CDU object is a handler for keypress.
+you can with but it's useless ( or just to get device info)
+
+```javascript
+const cdu = new CDU();
+// displays manufacturer, product,serial number
+console.log(cdu.getDeviceInfo());
+```
+
+To interact with the device, you need to provide a handler for keypress.
+
+```javascript
+const onKeyPressHandler = (keyPressed) => {
+  keyPressed.forEach((key) => {
+    console.log(key.label);
+    // or do something with the key like calling dcsbios commands.
+  });
+};
+
+const cdu = new CDU(
+  onKeyPressHandler // handler for keypress
+);
+```
+
+You can also customise several parameters of the constructor
+default 100 ms for led refresh should be enough. ( if you need to blink it's 10 times / s !)
+500ms for display refresh is also a good value. it refreshes 2 times / s and does not flicker and does not send too much data to the device.
+You may feel a very small delay when you you expect a screen update.
+
+```javascript
+import { CDU, colors, cdu_chars } from 'cdu737';
+
+const onKeyPressHandler = (keyPressed) => {
+  keyPressed.forEach((key) => {
+    console.log(key.label);
+    // or do something with the key like calling dcsbios commands.
+  });
+};
+
+const cdu = new CDU(
+  onKeyPressHandler, // handler for keypress
+  (err) => console.error('Error:', err), // error handler
+  colors.green, // default color is white if not provided
+  200, // led refresh rate in ms ( 100 ms is the default value)
+  250 // display refresh rate in ms ( 500 ms is the default value)
+  // customCharacterMap // see below for more details
+);
+```
+
+Specify a custom character map to use with the device.
+The default character map maps a-z, A-Z, 0-9, and some special characters.
+() - / : . % < > ; + °
+other characters exists in the CDU but are not mapped by default.
+This custom character map is added to the default one. This prevents you from having to map all the standard existing characters.
+
+```javascript
+const customCharacterMap = {
+  // the idea is to map the character you need to display to the one that is available
+  // in the device and "looks like" the one you want.
+  // for example, the device has () but no [] so you can map '[' to '(' and ']' to ')'
+
+  '[': cdu_chars.OpenParent,
+  ']': cdu_chars.CloseParent,
+};
+```

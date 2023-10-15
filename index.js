@@ -18,7 +18,7 @@ import { leds } from './src/leds.js';
 
 export { leds } from './src/leds.js';
 export { colors } from './src/colors.js';
-export { modifiers } from './src/text.js';
+export { cdu_chars, modifiers } from './src/text.js';
 export { keys } from './src/keys.js';
 
 export const CDU = (() => {
@@ -42,6 +42,7 @@ export const CDU = (() => {
   let _displayRefreshRate = 1000; // ms
 
   let _defaultColor = colors.white;
+  let _characterMap = defaultCharacterMap;
 
   // Find the device
   let _device = initDevice();
@@ -98,33 +99,35 @@ export const CDU = (() => {
 
   /**
    * CDU constructor
-   * @param {keyof typeof colors} defaultColor the default color of the screen
    * @param {(keypressed : keys[]) => void} onDataHandler handler for keypress
    * @param {(err) => void} onErrorHandler default logs error to console
+   * @param {keyof typeof colors} defaultColor the default color of the screen
    * @param {int} ledRefreshRate refresh rate ins ms for the leds update routine
    * @param {int} displayRefreshRate refresh rate in ms for the display update routine
-   * @param { { [key: string] : keyof typeof cdu_chars } } charaterMap the character map to use if you want to use a different one
+   * @param { { [key: string] : keyof typeof cdu_chars } } charaterMap to add to the default one
    *
    * @returns {CDU} CDU instance
    */
   function CDU(
-    defaultColor = colors.white,
-    onDataHandler = (data) => {
-      return data;
-    },
+    onDataHandler = (data) => {},
     onErrorHandler = (err) => console.error('Error:', err),
-    ledRefreshRate,
-    displayRefreshRate,
-    charaterMap = defaultCharacterMap
+    defaultColor = colors.white,
+    ledRefreshRate = 100,
+    displayRefreshRate = 500,
+    charaterMap
   ) {
+    if (charaterMap) {
+      _characterMap = { ...defaultCharacterMap, ...charaterMap };
+    }
     _defaultColor = defaultColor;
     _displayRefreshRate = displayRefreshRate;
+    clearScreen(_textBuffer, _ROWS, _COLUMNS);
 
-    setInterval(() => {
+    const displayInterval = setInterval(() => {
       updateScreen();
     }, _displayRefreshRate);
 
-    setInterval(() => {
+    const ledInterval = setInterval(() => {
       updateLedsAndBrighness();
     }, ledRefreshRate);
 
@@ -141,6 +144,10 @@ export const CDU = (() => {
     }
 
     // public things
+
+    this.getDeviceInfo = () => {
+      return _device.getDeviceInfo();
+    };
 
     this.clearScreen = () => {
       cursor = [0, 0];
@@ -180,16 +187,22 @@ export const CDU = (() => {
     };
 
     // Method to write a character with code, color, and state to the buffer at a specified position
-    this.writeChar = function (row, col, code, color, state) {
+    this.writeChar = function (row, col, code, color = _defaultColor, state) {
       writeChar(_textBuffer, _ROWS, _COLUMNS, row, col, code, color, state);
     };
 
-    this.writeLine = function (line, col, text, color, modifiers) {
+    this.writeLine = function (
+      line,
+      col,
+      text,
+      color = _defaultColor,
+      modifiers
+    ) {
       writeLine(
         _textBuffer,
         _ROWS,
         _COLUMNS,
-        charaterMap,
+        _characterMap,
         line,
         col,
         text,
@@ -216,6 +229,15 @@ export const CDU = (() => {
 
     this.resetLeds = function (led) {
       _ledStatus &= ~led;
+    };
+
+    this.close = () => {
+      clearInterval(displayInterval);
+      clearInterval(ledInterval);
+
+      _device.removeAllListeners();
+
+      _device.close();
     };
   }
   return CDU;
