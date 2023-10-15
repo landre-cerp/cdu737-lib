@@ -1,7 +1,8 @@
 import { HID, devices } from 'node-hid';
 import { colors } from './src/colors.js';
 import { readKeypress } from './src/keys.js';
-import { cdu_chars, charMapper, modifiers } from './src/text.js';
+import { cdu_chars, charMapper, modifiers, map_chars } from './src/text.js';
+import { vScrollDisplayDown, vScrollDisplayUp } from './src/display.js';
 
 // if you have more than 1 device connected, you can use serial number too.
 export const VID = 0x0483;
@@ -21,7 +22,7 @@ export const CDU = (() => {
   let _screenBrightness = 0x80;
   let _keyboardBrightness = 0x0;
 
-  let _displayRefreshRate = 500;
+  let _displayRefreshRate = 1000;
 
   // Find the device
   let _deviceInfo = devices().find(
@@ -35,10 +36,6 @@ export const CDU = (() => {
     setInterval(() => {
       updateLedsAndBrighness(_device);
     }, _ledRefreshRate);
-
-    setInterval(() => {
-      updateScreen();
-    }, _displayRefreshRate);
   } else {
     console.log('Device not found.');
   }
@@ -117,6 +114,11 @@ export const CDU = (() => {
     charMap = charMapper
   ) {
     _displayRefreshRate = displayRefreshRate;
+
+    setInterval(() => {
+      updateScreen();
+    }, _displayRefreshRate);
+
     _ledRefreshRate = ledRefreshRate;
 
     if (onErrorHandler) {
@@ -196,13 +198,30 @@ export const CDU = (() => {
 
     // Method to write a character with code, color, and state to the buffer at a specified position
     this.writeChar = function (row, col, code, color, state) {
+      let value = code | state;
       if (row >= 0 && row < _rows && col >= 0 && col < _columns) {
         _buffer[row][col] = {
-          code,
+          code: value,
           color,
-          state,
         };
       }
+    };
+
+    this.writeLine = function (line, col, text, color, modifiers) {
+      if (text.length > _columns) {
+        throw new Error(`${text} is too long`);
+      }
+      const chars = map_chars(text);
+      for (let i = 0; i < chars.length; i++) {
+        this.writeChar(line, col + i, chars[i], color, modifiers);
+      }
+    };
+
+    this.scrollUp = () => {
+      vScrollDisplayUp(_buffer, _rows);
+    };
+    this.scrollDown = () => {
+      vScrollDisplayDown(_buffer, _rows);
     };
 
     // Method to handle Led status

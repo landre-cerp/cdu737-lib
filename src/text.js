@@ -83,11 +83,8 @@ export const charMapper = {
   '+': cdu_chars.Plus,
   ':': cdu_chars.Colon,
   ';': cdu_chars.Semicolon,
-
   '°': cdu_chars.Degree,
-  '°C': cdu_chars.DegCelsius,
-  '°F': cdu_chars.DegFarenheit,
-  '✓': cdu_chars.Check,
+  '*': cdu_chars.Check,
   0: cdu_chars.Zero,
   1: cdu_chars.One,
   2: cdu_chars.Two,
@@ -124,4 +121,38 @@ export const charMapper = {
   x: cdu_chars.X,
   y: cdu_chars.Y,
   z: cdu_chars.Z,
+  A: cdu_chars.A | modifiers.big,
+  B: cdu_chars.B | modifiers.big,
+  C: cdu_chars.C | modifiers.big,
+  D: cdu_chars.D | modifiers.big,
+  E: cdu_chars.E | modifiers.big,
+  F: cdu_chars.F | modifiers.big,
+  G: cdu_chars.G | modifiers.big,
+  H: cdu_chars.H | modifiers.big,
+  I: cdu_chars.I | modifiers.big,
+  J: cdu_chars.J | modifiers.big,
+  K: cdu_chars.K | modifiers.big,
+  L: cdu_chars.L | modifiers.big,
+  M: cdu_chars.M | modifiers.big,
+  N: cdu_chars.N | modifiers.big,
+  O: cdu_chars.O | modifiers.big,
+  P: cdu_chars.P | modifiers.big,
+  Q: cdu_chars.Q | modifiers.big,
+  R: cdu_chars.R | modifiers.big,
+  S: cdu_chars.S | modifiers.big,
+  T: cdu_chars.T | modifiers.big,
+  U: cdu_chars.U | modifiers.big,
+  V: cdu_chars.V | modifiers.big,
+  W: cdu_chars.W | modifiers.big,
+  X: cdu_chars.X | modifiers.big,
+  Y: cdu_chars.Y | modifiers.big,
+  Z: cdu_chars.Z | modifiers.big,
+};
+
+export const map_chars = (str) => {
+  let result = [];
+  for (let i = 0; i < str.length; i++) {
+    result.push(charMapper[str[i]]);
+  }
+  return result;
 };
