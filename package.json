@@ -1,6 +1,6 @@
 {
   "name": "cdu737",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "author": "Laurent Andre <laurent.and@gmail.com>",
   "description": "Library to interact with Cockpitmaster CDU737",
   "main": "index.js",
@@ -9,7 +9,8 @@
     ".": "./index.js",
     "./colors": "./src/colors.js",
     "./leds": "./src/leds.js",
-    "./modifiers": "./src/text.js"
+    "./modifiers": "./src/text.js",
+    "./keys": "./src/keys.js"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

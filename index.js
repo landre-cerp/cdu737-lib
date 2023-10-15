@@ -155,7 +155,7 @@ export const CDU = (() => {
     };
 
     this.increaseKeyboardBrightness = (value) => {
-      _keyboardBrightness = increaseBrightnes(_keyboardBrightness, value);
+      _keyboardBrightness = increaseBrightness(_keyboardBrightness, value);
     };
 
     this.decreaseKeyboardBrightness = (value) => {
