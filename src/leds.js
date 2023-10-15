@@ -1,4 +1,5 @@
 export const leds = {
+  OFF: 0b0000000,
   EXEC: 0b0000001,
   MSG: 0b0000010,
   OFST: 0b0000100,
