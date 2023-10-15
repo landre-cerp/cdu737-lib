@@ -16,6 +16,11 @@ import {
 import { initDevice } from './src/device.js';
 import { leds } from './src/leds.js';
 
+export { leds } from './src/leds.js';
+export { colors } from './src/colors.js';
+export { modifiers } from './src/text.js';
+export { keys } from './src/keys.js';
+
 export const CDU = (() => {
   // private things
   const _ROWS = 14;
