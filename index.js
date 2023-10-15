@@ -41,6 +41,8 @@ export const CDU = (() => {
 
   let _displayRefreshRate = 1000; // ms
 
+  let _defaultColor = colors.white;
+
   // Find the device
   let _device = initDevice();
 
@@ -94,9 +96,19 @@ export const CDU = (() => {
     }
   };
 
-  // constructor
+  /**
+   * CDU constructor
+   * @param {keyof typeof colors} defaultColor the default color of the screen
+   * @param {(keypressed : keys[]) => void} onDataHandler handler for keypress
+   * @param {(err) => void} onErrorHandler default logs error to console
+   * @param {int} ledRefreshRate refresh rate ins ms for the leds update routine
+   * @param {int} displayRefreshRate refresh rate in ms for the display update routine
+   * @param { { [key: string] : keyof typeof cdu_chars } } charaterMap the character map to use if you want to use a different one
+   *
+   * @returns {CDU} CDU instance
+   */
   function CDU(
-    _defaultColor = colors.white,
+    defaultColor = colors.white,
     onDataHandler = (data) => {
       return data;
     },
@@ -105,6 +117,7 @@ export const CDU = (() => {
     displayRefreshRate,
     charaterMap = defaultCharacterMap
   ) {
+    _defaultColor = defaultColor;
     _displayRefreshRate = displayRefreshRate;
 
     setInterval(() => {
@@ -129,24 +142,23 @@ export const CDU = (() => {
 
     // public things
 
-    // Méthode pour afficher le contenu du buffer à la console
-    this.dumpBuffer = function () {
-      for (let i = 0; i < _ROWS; i++) {
-        // Display buffer on
-      }
-    };
-
     this.clearScreen = () => {
       cursor = [0, 0];
       clearScreen(_textBuffer, _ROWS, _COLUMNS);
     };
 
-    // Handling Brightness of the screen and keyboard
-
+    /**
+     * Set the screen brightness
+     * @param {int} intensity 0-255
+     */
     this.setScreenBrightness = function (intensity) {
       _screenBrightness = setBrightness(intensity);
     };
 
+    /**
+     * Set the keyboard brightness
+     * @param {int} intensity 0-255
+     */
     this.setKeyboardBrightness = function (intensity) {
       _keyboardBrightness = setBrightness(intensity);
     };
