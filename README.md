@@ -107,13 +107,3 @@ if (cdu) {
   console.log('Device not found.');
 }
 ```
-
-# API
-
-## CDU
-
-### constructor
-
-```javascript
-new CDU();
-```
