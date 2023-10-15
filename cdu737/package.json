@@ -1,0 +1,19 @@
+{
+  "name": "cdu737",
+  "version": "0.1.0",
+  "description": "Library to interact with Cockpitmaster CDU737",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/landre-cerp/cdu737-lib.git"
+  },
+  "author": "Laurent Andre <laurent.and@gmail.com>",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/landre-cerp/cdu737-lib/issues"
+  },
+  "homepage": "https://github.com/landre-cerp/cdu737-lib#readme"
+}

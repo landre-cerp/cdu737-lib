@@ -1,17 +1,14 @@
 {
-  "name": "usb",
+  "name": "cduexamples",
   "version": "1.0.0",
-  "description": "",
+  "description": "examples to use the cdu library",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "example01": "node example01.js"
   },
-  "author": "",
+  "author": "Laurent Andre <laurent.and@gmail.com>",
   "license": "ISC",
-  "dependencies": {
-    "node-hid": "^2.1.2",
-    "usb": "^2.11.0"
-  }
+  "dependencies": {}
 }
