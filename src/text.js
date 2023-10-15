@@ -83,16 +83,8 @@ export const defaultCharacterMap = {
   '+': cdu_chars.Plus,
   ':': cdu_chars.Colon,
   ';': cdu_chars.Semicolon,
-  // '': cdu_chars.EmptySquare,
-  // '': cdu_chars.UpArrow,
-  // '': cdu_chars.DownArrow,
-  // '': cdu_chars.LeftArrow,
-  // '': cdu_chars.RightArrow,
 
   '°': cdu_chars.Degree,
-  // '': cdu_chars.DegCelsius,
-  // '': cdu_chars.DegFarenheit,
-
   '*': cdu_chars.Check,
   0: cdu_chars.Zero,
   1: cdu_chars.One,
