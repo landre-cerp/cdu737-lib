@@ -80,6 +80,10 @@ export const keys = [
   { group: 10, bit: 1 << 0, label: 'CLR' },
 ];
 
+let oldKeyPressed = [];
+
+// Debounce need to be improved
+
 export const readKeypress = (data) => {
   const keypressed = [];
   for (let index = 1; index < 11; index++) {
@@ -88,11 +92,12 @@ export const readKeypress = (data) => {
     Object.keys(keys).forEach((key) => {
       if (keys[key].group === index) {
         const bit = keys[key].bit;
-        if (group & bit) {
+        if (group & bit && !oldKeyPressed.includes(keys[key])) {
           keypressed.push(keys[key]);
         }
       }
     });
   }
+  oldKeyPressed = keypressed;
   return keypressed;
 };

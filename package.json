@@ -1,9 +1,15 @@
 {
   "name": "cdu737",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Laurent Andre <laurent.and@gmail.com>",
   "description": "Library to interact with Cockpitmaster CDU737",
   "main": "index.js",
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./colors": "./src/colors.js",
+    "./leds": "./src/leds.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -15,5 +21,9 @@
   "bugs": {
     "url": "https://github.com/landre-cerp/cdu737-lib/issues"
   },
-  "homepage": "https://github.com/landre-cerp/cdu737-lib#readme"
+  "homepage": "https://github.com/landre-cerp/cdu737-lib#readme",
+  "dependencies": {
+    "node-hid": "^2.1.2",
+    "usb": "^2.11.0"
+  }
 }

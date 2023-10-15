@@ -1,18 +1,10 @@
-import { colors } from './colors.js';
 import { HID, devices } from 'node-hid';
-import { readKeypress } from './keys.js';
+import { colors } from './src/colors.js';
+import { readKeypress } from './src/keys.js';
 
 // if you have more than 1 device connected, you can use serial number too.
 export const VID = 0x0483;
 export const PID = 0x5b36;
-
-export const leds = {
-  EXEC: 0b0000001,
-  MSG: 0b0000010,
-  OFST: 0b0000100,
-  FAIL: 0b0001000,
-  CALL: 0b0010000,
-};
 
 export const CDU = (() => {
   // private things
@@ -25,13 +17,8 @@ export const CDU = (() => {
   let _displayRefreshRate = 500;
   let _ledRefreshRate = 100;
 
-  let _onErrorHandler = null;
-  let _onDataHandler = null;
-
   let _screenBrightness = 0xff;
   let _keyboardBRifghtness = 0xff;
-
-  let _oldData = new Uint8Array(64);
 
   // Find the device
   let _deviceInfo = devices().find(
@@ -57,16 +44,6 @@ export const CDU = (() => {
     _device.write([0, ...lastLine]);
   };
 
-  // assuming the data is an array of bytes of the same length
-  const keyChanged = (oldData, newData) => {
-    for (let i = 0; i < oldData.length; i++) {
-      if (oldData[i] !== newData[i]) {
-        return true;
-      }
-    }
-    return false;
-  };
-
   // constructor
   function CDU(
     _defaultColor = colors.white,
@@ -77,17 +54,18 @@ export const CDU = (() => {
   ) {
     _displayRefreshRate = displayRefreshRate;
     _ledRefreshRate = ledRefreshRate;
-    _onDataHandler = onDataHandler;
-    _onErrorHandler = onErrorHandler;
 
-    _device.on('error', _onErrorHandler);
+    if (onErrorHandler) {
+      _device.on('error', onErrorHandler);
+    }
 
-    _device.on('data', (data) => {
-      if (keyChanged(_oldData, data) && _onDataHandler) {
-        _onDataHandler(readKeypress(data));
-        _oldData = data;
-      }
-    });
+    if (onDataHandler) {
+      _device.on('data', (data) => {
+        // data is the new state of the keys
+
+        onDataHandler(readKeypress(data));
+      });
+    }
 
     // public things
 
@@ -152,6 +130,30 @@ export const CDU = (() => {
 
     this.toggleLed = function (led) {
       _ledStatus ^= led;
+    };
+
+    this.decreaseBrightness = (value) => {
+      if (value < 0) {
+        value = -value;
+      }
+
+      if (_screenBrightness > value) {
+        _screenBrightness -= value;
+      } else {
+        _screenBrightness = 0;
+      }
+    };
+
+    this.increaseBrightness = (value) => {
+      if (value < 0) {
+        value = -value;
+      }
+
+      if (_screenBrightness < 0xff - value) {
+        _screenBrightness += value;
+      } else {
+        _screenBrightness = 0xff;
+      }
     };
   }
   return CDU;
