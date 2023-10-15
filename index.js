@@ -186,7 +186,20 @@ export const CDU = (() => {
       _keyboardBrightness = decreaseBrightness(_keyboardBrightness, value);
     };
 
-    // Method to write a character with code, color, and state to the buffer at a specified position
+    /**
+     * Writes a character to the buffer at a specified position
+     * the char is Not mapped
+     *
+     * @param {int} row (0-13)
+     * @param {int} col (0-23)
+     * @param {number} code Unsigned 8-bit integer
+     * @param {keyof typeof colors} color
+     * @param {keyof typeof modifiers} state
+     *
+     * @example writeChar(6, 10, cdu_char.UpArrow , colors.blue, modifiers.big);
+     * @example writeChar(6, 11, 0x47, colors.yellow, modifiers.inverted);
+     * @example writeChar(6, 12, cdu_char.DownArrow, colors.red, modifiers.inverted | modifiers.big);
+     */
     this.writeChar = function (row, col, code, color = _defaultColor, state) {
       writeChar(_textBuffer, _ROWS, _COLUMNS, row, col, code, color, state);
     };
