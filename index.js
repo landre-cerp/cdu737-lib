@@ -1,6 +1,7 @@
 import { HID, devices } from 'node-hid';
 import { colors } from './src/colors.js';
 import { readKeypress } from './src/keys.js';
+import { cdu_chars, charMapper, modifiers } from './src/text.js';
 
 // if you have more than 1 device connected, you can use serial number too.
 export const VID = 0x0483;
@@ -12,36 +13,98 @@ export const CDU = (() => {
   let _columns = 24;
   let _buffer = [];
 
+  // LEDS are off by default
+  // this is bit mask for the leds
   let _ledStatus = 0;
-
-  let _displayRefreshRate = 500;
   let _ledRefreshRate = 100;
 
-  let _screenBrightness = 0xff;
-  let _keyboardBRifghtness = 0xff;
+  let _screenBrightness = 0x80;
+  let _keyboardBrightness = 0x0;
+
+  let _displayRefreshRate = 500;
 
   // Find the device
   let _deviceInfo = devices().find(
     (d) => d.vendorId === VID && d.productId === PID
   );
   let _device = null;
+
   if (_deviceInfo) {
     _device = new HID(_deviceInfo.path);
 
     setInterval(() => {
-      updateLeds(_device);
+      updateLedsAndBrighness(_device);
     }, _ledRefreshRate);
+
+    setInterval(() => {
+      updateScreen();
+    }, _displayRefreshRate);
   } else {
     console.log('Device not found.');
   }
 
-  const updateLeds = () => {
+  const updateLedsAndBrighness = () => {
     const lastLine = new Uint8Array(64);
     lastLine[0] = 9;
     lastLine[1] = _screenBrightness;
-    lastLine[2] = _keyboardBRifghtness;
+    lastLine[2] = _keyboardBrightness;
     lastLine[3] = _ledStatus;
     _device.write([0, ...lastLine]);
+  };
+
+  const updateScreen = () => {
+    // Copy lines to ScreenBuffer
+
+    let needbreak = 64;
+    let currentHidReport = 1;
+
+    let hidReport = new Uint8Array(64); // not 64 as the 1st is the "report number" (remember needs 8 report for the screen)
+    hidReport[0] = currentHidReport;
+    let copiedInCurrentBuffer = 1;
+
+    // Scan all the lines,
+    for (let line = 0; line < _rows; line++) {
+      // and all the columns
+
+      for (let i = 0; i < _columns; i += 2) {
+        // we need to encode the _buffer so it's understandable by the device.
+        // read 2 chars at a time and encode them
+        let encoded = Encode2Chars(_buffer[line][i], _buffer[line][i + 1]);
+
+        hidReport[copiedInCurrentBuffer] = encoded[0];
+        hidReport[copiedInCurrentBuffer + 1] = encoded[1];
+        hidReport[copiedInCurrentBuffer + 2] = encoded[2];
+        copiedInCurrentBuffer += 3;
+
+        if (copiedInCurrentBuffer == needbreak) {
+          // send report to device
+          // increment report number
+          _device.write([0, ...hidReport]);
+
+          hidReport = new Uint8Array(64);
+          currentHidReport++;
+          hidReport[0] = currentHidReport;
+          copiedInCurrentBuffer = 1;
+        }
+      }
+    }
+  };
+
+  const Encode2Chars = (char1, char2) => {
+    // encode 2 consecutive chars
+    // respecting the HIDreport structure
+    // Simply put two consecutive chars are encoded that way.
+    // Assume they both are 0x47 0x47  (which is a dash '-')
+    // red is 0x03 green is 0x02
+    //  => 0x47 0x7(seven of the 0x47 second char)(col1=3) 0x(col2=2)4(four of the 47 2nd char)
+
+    // method returns => 0x47 0x73 0x24
+
+    let encoded = new Uint8Array(3);
+    encoded[0] = char1.code;
+    encoded[1] = (char2.code << 4) | char1.color;
+    encoded[2] = (char2.code >> 4) | (char2.color << 4);
+    return encoded;
   };
 
   // constructor
@@ -50,7 +113,8 @@ export const CDU = (() => {
     onDataHandler = null,
     onErrorHandler = null,
     ledRefreshRate,
-    displayRefreshRate
+    displayRefreshRate,
+    charMap = charMapper
   ) {
     _displayRefreshRate = displayRefreshRate;
     _ledRefreshRate = ledRefreshRate;
@@ -69,15 +133,6 @@ export const CDU = (() => {
 
     // public things
 
-    this.resetLeds = function () {
-      // LEDS are off by default
-      this.exec = false;
-      this.msg = false;
-      this.offst = false;
-      this.fail = false;
-      this.call = false;
-    };
-
     // Méthode pour afficher le contenu du buffer à la console
     this.dumpBuffer = function () {
       for (let i = 0; i < _rows; i++) {
@@ -90,14 +145,16 @@ export const CDU = (() => {
         let row = [];
         for (let j = 0; j < _columns; j++) {
           row.push({
-            charCode: 32, // Default to space character
-            color: colors.white, // Default color
-            state: 'INVERTED', // Default state
+            code: cdu_chars.Space, // Default to space character
+            color: _defaultColor, // Default color
+            state: modifiers.inverted, // Default state
           });
         }
         _buffer.push(row);
       }
     };
+
+    // Handling Brightness of the screen and keyboard
 
     this.screenBrightness = function (intensity) {
       if (intensity < 0 || intensity > 0xff) {
@@ -106,30 +163,11 @@ export const CDU = (() => {
       _screenBrightness = intensity;
     };
 
-    this.keyboardBRifghtness = function (intensity) {
+    this.keyboardBrightness = function (intensity) {
       if (intensity < 0 || intensity > 0xff) {
         throw new Error('keyboardBRifghtness must be between 0 and 255');
       }
-      _keyboardBRifghtness = intensity;
-    };
-
-    // Method to write a character with code, color, and state to the buffer at a specified position
-    this.writeChar = function (row, col, charCode, color, state) {
-      if (row >= 0 && row < _rows && col >= 0 && col < _columns) {
-        _buffer[row][col] = {
-          charCode,
-          color,
-          state,
-        };
-      }
-    };
-
-    this.setLed = function (led) {
-      _ledStatus |= led;
-    };
-
-    this.toggleLed = function (led) {
-      _ledStatus ^= led;
+      _keyboardBrightness = intensity;
     };
 
     this.decreaseBrightness = (value) => {
@@ -154,6 +192,30 @@ export const CDU = (() => {
       } else {
         _screenBrightness = 0xff;
       }
+    };
+
+    // Method to write a character with code, color, and state to the buffer at a specified position
+    this.writeChar = function (row, col, code, color, state) {
+      if (row >= 0 && row < _rows && col >= 0 && col < _columns) {
+        _buffer[row][col] = {
+          code,
+          color,
+          state,
+        };
+      }
+    };
+
+    // Method to handle Led status
+    this.setLed = function (led) {
+      _ledStatus |= led;
+    };
+
+    this.toggleLed = function (led) {
+      _ledStatus ^= led;
+    };
+
+    this.resetLeds = function (led) {
+      _ledStatus &= ~led;
     };
   }
   return CDU;

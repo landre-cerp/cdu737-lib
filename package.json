@@ -1,6 +1,6 @@
 {
   "name": "cdu737",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "author": "Laurent Andre <laurent.and@gmail.com>",
   "description": "Library to interact with Cockpitmaster CDU737",
   "main": "index.js",
