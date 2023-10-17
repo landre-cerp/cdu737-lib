@@ -35,7 +35,7 @@ To get started with development:
 
 ## Testing
 
-to be done
+to be done, but for example, testing in CI would be limited as it requires a physical device to be connected to the computer.
 
 ## License
 
