@@ -2,6 +2,11 @@
 
 This a node.js library to interact with the CockpitMaster CS 737X CDU
 
+PLEASE NOTE THAT THIS LIBRARY IS NOT SUPPORTED BY COCKPITMASTER.
+PLEASE DO NOT CONTACT THEM FOR SUPPORT.
+
+THIS LIBRARY IS IN EARLY DEVELOPMENT STAGE AND IS SUBJECT TO BREAKING CHANGES.
+
 With this library, in a node.js program, you can:
 
 - read CDU key press
