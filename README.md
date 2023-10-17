@@ -37,39 +37,45 @@ for more information about the device and the display capabilities.
  * - Blink some Leds.
  **/
 
-import { CDU, leds, colors, modifiers, keys } from 'cdu737';
+import { CDU, colors, LED, modifiers, keys } from 'cdu737';
 
-const onKeyPressHandler = (keyPressed) => {
+const onKeyPressHandler = (keyPressed, cdu) => {
+  let cduLeds = cdu.getLeds();
+  let display = cdu.getDisplay();
+
   keyPressed.forEach((key) => {
     console.log(key.label);
     // or do something with the key like calling dcsbios commands.
 
     if (key === keys.EXEC) {
-      cdu.toggleLed(leds.EXEC | leds.FAIL);
+      cduLeds.toggleLed(LED.EXEC | LED.FAIL);
     }
 
     if (key === keys.BRT_MINUS) {
-      cdu.decreaseScreenBrightness(10);
-      cdu.decreaseKeyboardBrightness(10);
+      cduLeds.decreaseScreenBrightness(10);
+      cduLeds.decreaseKeyboardBrightness(10);
     }
 
     if (key === keys.BRT_PLUS) {
-      cdu.increaseScreenBrightness(10);
-      cdu.increaseKeyboardBrightness(10);
+      cduLeds.increaseScreenBrightness(10);
+      cduLeds.increaseKeyboardBrightness(10);
     }
 
     if (key === keys.RSK1) {
-      cdu.scrollUp();
+      display.scrollUp();
     }
     if (key === keys.RSK2) {
-      cdu.scrollDown();
+      display.scrollDown();
     }
   });
 };
 
 const cdu = new CDU(
-  onKeyPressHandler // handler for keypress
+  onKeyPressHandler, // handler for keypress
+  (err) => console.error('Error:', err), // error handler
+  colors.green // default color is white if not provided
 );
+
 console.log('This an example program for the CDU737 library');
 console.log("Press 'EXEC' to toggle the EXEC and FAIL led .");
 console.log(
@@ -84,15 +90,15 @@ const { manufacturer, product, serialNumber } = cdu.getDeviceInfo();
 // See Wiki https://github.com/landre-cerp/cdu737-lib/wiki
 // for more information about the device and the display capabilities.
 
-const testDisplay = () => {
-  cdu.clearScreen();
+const testDisplay = (display) => {
+  display.clearScreen();
 
   // each line is 24 characters long. more than 24 characters will raise an error.
   // cdu can display 14 lines. ( 0 - 13)
 
-  cdu.writeLine(0, 0, '0123456789abcdefghijklmn', colors.white);
-  cdu.writeLine(1, 0, 'opqrstuvwxyzAZCDEFGHIJKL', colors.red);
-  cdu.writeLine(
+  display.writeLine(0, 0, '0123456789abcdefghijklmn', colors.white);
+  display.writeLine(1, 0, 'opqrstuvwxyzAZCDEFGHIJKL', colors.red);
+  display.writeLine(
     2,
     0,
     'MNOPQRSTUVWXYZ<>%().-/+:',
@@ -100,21 +106,22 @@ const testDisplay = () => {
     modifiers.inverted
   );
 
-  cdu.writeLine(3, 0, ';*0123456789abcdefghijkl', colors.yellow);
-  cdu.writeLine(4, 0, '0123456789abcdefghijklmn', colors.blue);
-  cdu.writeLine(5, 0, '0123456789abcdefghijklmn', colors.purple);
-  cdu.writeLine(6, 0, '0123456789abcdefghijklmn', colors.cyan);
-  cdu.writeLine(7, 0, '0123456789abcdefghijklmn', colors.dark_green);
-  cdu.writeLine(8, 0, manufacturer, colors.yellow);
-  cdu.writeLine(9, 0, product, colors.cyan);
-  cdu.writeLine(10, 0, serialNumber, colors.red);
-  cdu.writeLine(11, 0, '0123456789abcdefghijklmn');
-  cdu.writeLine(12, 0, '0123456789abcdefghijklmn');
-  cdu.writeLine(13, 0, '------------------------');
+  display.writeLine(3, 0, ';*0123456789abcdefghijkl', colors.yellow);
+  display.writeLine(4, 0, '0123456789abcdefghijklmn', colors.blue);
+  display.writeLine(5, 0, '0123456789abcdefghijklmn', colors.purple);
+  display.writeLine(6, 0, '0123456789abcdefghijklmn', colors.cyan);
+  display.writeLine(7, 0, '0123456789abcdefghijklmn', colors.dark_green);
+  display.writeLine(8, 0, manufacturer, colors.yellow);
+  display.writeLine(9, 0, product, colors.cyan);
+  display.writeLine(10, 0, serialNumber, colors.red);
+  // those 3 lines should use the default color ( green in this example)
+  display.writeLine(11, 0, '0123456789abcdefghijklmn');
+  display.writeLine(12, 0, '0123456789abcdefghijklmn');
+  display.writeLine(13, 0, '------------------------');
 };
 
 if (cdu) {
-  testDisplay();
+  testDisplay(cdu.getDisplay());
 } else {
   console.log('Device not found.');
 }
@@ -139,28 +146,27 @@ const cdu = new CDU();
 console.log(cdu.getDeviceInfo());
 ```
 
-### keypressHandler
-
-To interact with the device, you need to provide a handler for keypress.
+### getDisplay()
 
 ```javascript
-const onKeyPressHandler = (keyPressed) => {
-  keyPressed.forEach((key) => {
-    console.log(key.label);
-    // or do something with the key like calling dcsbios commands.
-  });
-};
+const cdu = new CDU();
+// returns the display object
+const display = cdu.getDisplay();
+```
 
-const cdu = new CDU(
-  onKeyPressHandler // handler for keypress
-);
+### getLeds()
+
+```javascript
+const cdu = new CDU();
+// returns the leds object
+const cduLeds = cdu.getLeds();
 ```
 
 ### constuctor parameters
 
 You can also customise several parameters of the constructor
 default 100 ms for led refresh should be enough. ( if you need to blink it's 10 times / s !)
-500ms for display refresh is also a good value. it refreshes 2 times / s and does not flicker and does not send too much data to the device.
+250 for display refresh is also a good value. it refreshes 4 times/s and does not flicker and does not send too much data to the device.
 You may feel a very small delay when you you expect a screen update.
 
 ```javascript
@@ -176,30 +182,79 @@ const onKeyPressHandler = (keyPressed) => {
 const cdu = new CDU(
   onKeyPressHandler, // handler for keypress
   (err) => console.error('Error:', err), // error handler
-  colors.green, // default color is white if not provided
-  200, // led refresh rate in ms ( 100 ms is the default value)
-  250 // display refresh rate in ms ( 500 ms is the default value)
+  colors.green // default color is white if not provided
   // customCharacterMap // see below for more details
 );
 ```
 
-### Custom Character Map
+### keypressHandler
 
-Specify a custom character map to use with the device.
-The default character map maps a-z, A-Z, 0-9, and some special characters.
-() - / : . % < > ; + °
-other characters exists in the CDU but are not mapped by default.
-This custom character map is added to the default one. This prevents you from having to map all the standard existing characters.
+To interact with the device, you need to provide a handler for keypress.
 
 ```javascript
-const customCharacterMap = {
-  // the idea is to map the character you need to display to the one that is available
-  // in the device and "looks like" the one you want.
-  // for example, the device has () but no [] so you can map '[' to '(' and ']' to ')'
+/**
+ * Example of how to use the CDU737 class to display key strokes on the CDU.
+ */
+import { CDU } from 'cdu737';
 
-  '[': cdu_chars.OpenParent,
-  ']': cdu_chars.CloseParent,
+const onKeyPressHandler = (keyPressed, cdu_instance) => {
+  // if you need to access the display or the leds
+  const display = cdu_instance.getDisplay();
+  const cduLeds = cdu_instance.getLeds();
+
+  keyPressed.forEach((key) => {
+    console.log(key.label);
+    // or do something with the key like calling dcsbios commands.
+  });
 };
+
+const cdu = new CDU(
+  onKeyPressHandler // handler for keypress
+);
+```
+
+## Display
+
+### clearScreen
+
+```javascript
+display.clearScreen();
+```
+
+### writeChar
+
+some characters are not mapped by default and a bit "weird" to map.
+the up , down , left and right arrows for example to 0x1b, 0x1a, 0x19, 0x18.
+of the degree celcius and fahrenheit symbols are 0x7f and 0x80.
+
+you can use the writeChar method to display them.
+
+```javascript
+import { CDU, cdu_chars, colors, modifiers } from 'cdu737';
+
+const display = new CDU().getDisplay();
+
+/**
+ * Writes a character to the buffer at a specified position
+ * the char is Not mapped
+ *
+ * @param {int} row (0-13)
+ * @param {int} col (0-23)
+ * @param {number} code Unsigned 8-bit integer
+ * @param {keyof typeof colors} color
+ * @param {keyof typeof modifiers} state
+ */
+display.writeChar(6, 10, cdu_chars.UpArrow, colors.blue, modifiers.big);
+
+display.writeChar(6, 11, 0x47, colors.yellow, modifiers.inverted);
+
+display.writeChar(
+  6,
+  12,
+  cdu_chars.DownArrow,
+  colors.red,
+  modifiers.inverted | modifiers.big
+);
 ```
 
 ### writeLine
@@ -217,50 +272,64 @@ the text will be mapped using default character map and custom character map if 
  *
  * @trhows {Error} if line or column are out of range
  */
-cdu.writeLine(0, 0, '0123456789abcdefghijklmn', colors.white);
+
+const display = cdu.getDisplay();
+display.writeLine(0, 0, '0123456789abcdefghijklmn', colors.white);
 ```
 
 this will display the text in white on the first line starting at column 0.
-
 You can omit color and modifier. default values are white and none.
 
 ```javascript
-cdu.writeLine(0, 0, '0123456789abcdefghijklmn');
+display.writeLine(0, 0, '0123456789abcdefghijklmn');
 ```
 
-### clearScreen
+### Custom Character Map
+
+Specify a custom character map to use with the device.
+The default character map maps a-z, A-Z, 0-9, and some special characters.
+() - / : . % < > ; + °
+other characters exists in the CDU but are not mapped by default.
+This custom character map is added to the default one. This prevents you from having to map all the standard existing characters.
+
+This example will write (Hello World) on the top left in green color
+
+```javascript
+import { CDU, colors, cdu_chars } from 'cdu737';
+
+const onKeyPressHandler = (keyPressed, cdu_instance) => {
+  keyPressed.forEach((key) => {
+    console.log(key.label);
+    // or do something with the key like calling dcsbios commands.
+  });
+};
+
+const customCharacterMap = {
+  '[': cdu_chars.OpenParent,
+  ']': cdu_chars.CloseParent,
+};
+
+const display = new CDU(
+  onKeyPressHandler, // handler for keypress
+  (err) => console.error('Error:', err), // error handler
+  colors.green, // default color is white if not provided
+  customCharacterMap // see below for more details
+).getDisplay();
+
+display.clearScreen();
+display.writeLine(0, 0, '[Hello World]', colors.green);
+```
+
+You can specify a custom character map to use with the device in the constructor or you can change it later.
+
+### setCustomCharacterMap
 
 ```javascript
 /**
- * clear the screen
+ * set a custom character map
+ * @param {object} customCharacterMap
  */
-cdu.clearScreen();
-```
-
-### writeChar
-
-```javascript
-/**
- * Writes a character to the buffer at a specified position
- * the char is Not mapped
- *
- * @param {int} row (0-13)
- * @param {int} col (0-23)
- * @param {number} code Unsigned 8-bit integer
- * @param {keyof typeof colors} color
- * @param {keyof typeof modifiers} state
- */
-cdu.writeChar(6, 10, cdu_char.UpArrow, colors.blue, modifiers.big);
-
-cdu.writeChar(6, 11, 0x47, colors.yellow, modifiers.inverted);
-
-cdu.writeChar(
-  6,
-  12,
-  cdu_char.DownArrow,
-  colors.red,
-  modifiers.inverted | modifiers.big
-);
+display.setCustomCharacterMap(customCharacterMap);
 ```
 
 ### scrollUp & scrollDown
@@ -269,29 +338,73 @@ cdu.writeChar(
 /**
  * scroll the screen up or down
  */
-cdu.scrollUp();
-cdu.scrollDown();
+display.scrollUp();
+display.scrollDown();
+```
+
+### setDefaultColor
+
+```javascript
+/**
+ * set the default color
+ * @param {keyof typeof colors} color
+ */
+display.setDefaultColor(colors.green);
+```
+
+### updateScreen
+
+```javascript
+// This method is not ment to be used directly.
+// suffisant refresh rate should do the job.
+// i may remove it in the future.
+display.updateScreen();
 ```
 
 ## LEDS
 
-### leds
-
 To be able to use the leds, you need to import the leds object.
 
+Let's do a blink example !
+
 ```javascript
-import { leds } from 'cdu737';
+import { CDU, LED } from 'cdu737';
+
+const cdu = new CDU();
+
+let cdu_leds = cdu.getLeds();
+let cdu_display = cdu.getDisplay();
+
+let led = 0;
+
+setInterval(() => {
+  switch (led) {
+    case 0:
+      cdu_leds.toggleLed(LED.EXEC);
+      break;
+    case 1:
+      cdu_leds.toggleLed(LED.FAIL);
+      break;
+    case 2:
+      cdu_leds.toggleLed(LED.CALL);
+      break;
+    case 3:
+      cdu_leds.toggleLed(LED.MSG);
+      break;
+    case 4:
+      cdu_leds.toggleLed(LED.OFST);
+      break;
+  }
+  led = (led + 1) % 5;
+}, 200);
 ```
 
 ### toggleLed
 
 ```javascript
-/**
- * toggle the led. the leg to toggle is a bitwise OR of the leds you want to toggle
- * @param {byte} led
- */
-cdu.toggleLed(leds.EXEC);
-cdu.toggleLed(leds.MSG | leds.FAIL);
+import { CDU, LED } from 'cdu737';
+const cduLeds = new CDU().getLeds();
+cduLeds.toggleLed(LED.EXEC);
 ```
 
 ### setLed
@@ -301,7 +414,7 @@ cdu.toggleLed(leds.MSG | leds.FAIL);
  * set the led
  * @param {keyof typeof leds} led
  */
-cdu.setLed(leds.EXEC);
+cduLeds.setLed(leds.EXEC);
 ```
 
 ### clearLed
@@ -311,5 +424,49 @@ cdu.setLed(leds.EXEC);
  * clear the led
  * @param {keyof typeof leds} led
  */
-cdu.clearLed(leds.EXEC);
+cduLeds.clearLed(leds.EXEC);
+```
+
+Though it seems more logical to attache screen brightness to display, and keyboard to the cdu ( and maybe a keyboard class with keys ), Screen and keyboard brightness are with Leds because they are controlled by the same "update" command. Each time time you send the 9th hidReport , you update the leds, the screen and the keyboard brightness.
+
+### setScreenBrightness
+
+```javascript
+/**
+ * set the brightness of the screen
+ * @param {number} brightness ( 0 - 255)
+ */
+cduLeds.setScreenBrightness(50);
+```
+
+### increaseScreenBrightness decreaseScreenBrightness
+
+```javascript
+/**
+ * increase the brightness of the screen
+ * @param {number} brightness ( 0 - 255)
+ */
+cduLeds.increaseScreenBrightness(10);
+cdusLeds.decreaseScreenBrightness(10);
+```
+
+### setKeyboardBrightness
+
+```javascript
+/**
+ * set the brightness of the keyboard
+ * @param {number} brightness ( 0 - 255)
+ */
+cduLeds.setKeyboardBrightness(50);
+```
+
+### increaseKeyboardBrightness decreaseKeyboardBrightness
+
+```javascript
+/**
+ * increase the brightness of the keyboard
+ * @param {number} brightness ( 0 - 255)
+ */
+cduLeds.increaseKeyboardBrightness(10);
+cdusLeds.decreaseKeyboardBrightness(10);
 ```

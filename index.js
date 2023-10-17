@@ -1,257 +1,105 @@
 import { colors } from './src/colors.js';
 import { readKeypress } from './src/keys.js';
-import { defaultCharacterMap, Encode2Chars } from './src/text.js';
-import {
-  DEFAULT_BRIGHTNESS,
-  DEFAULT_KEYBOARD_BRIGHTNESS,
-  clearScreen,
-  decreaseBrightness,
-  increaseBrightness,
-  setBrightness,
-  vScrollDisplayDown,
-  vScrollDisplayUp,
-  writeChar,
-  writeLine,
-} from './src/display.js';
-import { initDevice } from './src/device.js';
-import { leds } from './src/leds.js';
+import { initDevice, PID } from './src/device.js';
+import { CDULeds } from './src/leds.js';
+import { Display } from './src/display.js';
 
-export { leds } from './src/leds.js';
 export { colors } from './src/colors.js';
 export { cdu_chars, modifiers } from './src/text.js';
 export { keys } from './src/keys.js';
+export { LED } from './src/leds.js';
 
 export const CDU = (() => {
-  // private things
-  const _ROWS = 14;
-  const _COLUMNS = 24;
+  let _display = null;
+  let _cduLeds = null;
 
-  // screen cursor
-  let cursor = [0, 0];
+  let displayInterval = null;
+  let ledInterval = null;
 
-  // This is the text buffer
-  let _textBuffer = [];
-
-  // LEDS are off by default
-  // this is bit mask for the leds
-  let _ledStatus = leds.OFF;
-
-  let _screenBrightness = DEFAULT_BRIGHTNESS;
-  let _keyboardBrightness = DEFAULT_KEYBOARD_BRIGHTNESS;
-
-  let _displayRefreshRate = 1000; // ms
-
-  let _defaultColor = colors.white;
-  let _characterMap = defaultCharacterMap;
-
-  // Find the device
-  let _device = initDevice();
-
-  const updateLedsAndBrighness = () => {
-    const lastLine = new Uint8Array(64);
-    lastLine[0] = 9;
-    lastLine[1] = _screenBrightness;
-    lastLine[2] = _keyboardBrightness;
-    lastLine[3] = _ledStatus;
-    _device.write([0, ...lastLine]);
-  };
-
-  const updateScreen = () => {
-    // Copy lines to ScreenBuffer
-
-    let needbreak = 64;
-    let currentHidReport = 1;
-
-    let hidReport = new Uint8Array(64); // not 64 as the 1st is the "report number" (remember needs 8 report for the screen)
-    hidReport[0] = currentHidReport;
-    let copiedInCurrentBuffer = 1;
-
-    // Scan all the lines,
-    for (let line = 0; line < _ROWS; line++) {
-      // and all the columns
-
-      for (let i = 0; i < _COLUMNS; i += 2) {
-        // we need to encode the _textBuffer so it's understandable by the device.
-        // read 2 chars at a time and encode them
-        let encoded = Encode2Chars(
-          _textBuffer[line][i],
-          _textBuffer[line][i + 1]
-        );
-
-        hidReport[copiedInCurrentBuffer] = encoded[0];
-        hidReport[copiedInCurrentBuffer + 1] = encoded[1];
-        hidReport[copiedInCurrentBuffer + 2] = encoded[2];
-        copiedInCurrentBuffer += 3;
-
-        if (copiedInCurrentBuffer == needbreak) {
-          // send report to device
-          // increment report number
-          _device.write([0, ...hidReport]);
-
-          hidReport = new Uint8Array(64);
-          currentHidReport++;
-          hidReport[0] = currentHidReport;
-          copiedInCurrentBuffer = 1;
-        }
-      }
-    }
-  };
-
-  /**
-   * CDU constructor
-   * @param {(keypressed : keys[]) => void} onDataHandler handler for keypress
-   * @param {(err) => void} onErrorHandler default logs error to console
-   * @param {keyof typeof colors} defaultColor the default color of the screen
-   * @param {int} ledRefreshRate refresh rate ins ms for the leds update routine
-   * @param {int} displayRefreshRate refresh rate in ms for the display update routine
-   * @param { { [key: string] : keyof typeof cdu_chars } } charaterMap to add to the default one
-   *
-   * @returns {CDU} CDU instance
-   */
-  function CDU(
-    onDataHandler = (data) => {},
-    onErrorHandler = (err) => console.error('Error:', err),
-    defaultColor = colors.white,
-    ledRefreshRate = 100,
-    displayRefreshRate = 500,
-    charaterMap
-  ) {
-    if (charaterMap) {
-      _characterMap = { ...defaultCharacterMap, ...charaterMap };
-    }
-    _defaultColor = defaultColor;
-    _displayRefreshRate = displayRefreshRate;
-    clearScreen(_textBuffer, _ROWS, _COLUMNS);
-
-    const displayInterval = setInterval(() => {
-      updateScreen();
-    }, _displayRefreshRate);
-
-    const ledInterval = setInterval(() => {
-      updateLedsAndBrighness();
-    }, ledRefreshRate);
-
-    if (onErrorHandler) {
-      _device.on('error', onErrorHandler);
-    }
-
-    if (onDataHandler) {
-      _device.on('data', (data) => {
-        // data is the new state of the keys
-
-        onDataHandler(readKeypress(data));
-      });
-    }
-
-    // public things
-
-    this.getDeviceInfo = () => {
-      return _device.getDeviceInfo();
-    };
-
-    this.clearScreen = () => {
-      cursor = [0, 0];
-      clearScreen(_textBuffer, _ROWS, _COLUMNS);
-    };
-
+  class CDU {
     /**
-     * Set the screen brightness
-     * @param {int} intensity 0-255
-     */
-    this.setScreenBrightness = function (intensity) {
-      _screenBrightness = setBrightness(intensity);
-    };
-
-    /**
-     * Set the keyboard brightness
-     * @param {int} intensity 0-255
-     */
-    this.setKeyboardBrightness = function (intensity) {
-      _keyboardBrightness = setBrightness(intensity);
-    };
-
-    this.increaseScreenBrightness = (value) => {
-      _screenBrightness = increaseBrightness(_screenBrightness, value);
-    };
-
-    this.decreaseScreenBrightness = (value) => {
-      _screenBrightness = decreaseBrightness(_screenBrightness, value);
-    };
-
-    this.increaseKeyboardBrightness = (value) => {
-      _keyboardBrightness = increaseBrightness(_keyboardBrightness, value);
-    };
-
-    this.decreaseKeyboardBrightness = (value) => {
-      _keyboardBrightness = decreaseBrightness(_keyboardBrightness, value);
-    };
-
-    /**
-     * Writes a character to the buffer at a specified position
-     * the char is Not mapped
+     * CDU constructor
+     * @param {(keypressed : keys[]) => void} onDataHandler handler for keypress
+     * @param {(err) => void} onErrorHandler default logs error to console
+     * @param {keyof typeof colors} defaultColor the default color of the screen
+     * @param { { [key: string] : keyof typeof cdu_chars } } charaterMap to add to the default one
      *
-     * @param {int} row (0-13)
-     * @param {int} col (0-23)
-     * @param {number} code Unsigned 8-bit integer
-     * @param {keyof typeof colors} color
-     * @param {keyof typeof modifiers} state
-     *
-     * @example writeChar(6, 10, cdu_char.UpArrow , colors.blue, modifiers.big);
-     * @example writeChar(6, 11, 0x47, colors.yellow, modifiers.inverted);
-     * @example writeChar(6, 12, cdu_char.DownArrow, colors.red, modifiers.inverted | modifiers.big);
+     * @returns {CDU} CDU instance
      */
-    this.writeChar = function (row, col, code, color = _defaultColor, state) {
-      writeChar(_textBuffer, _ROWS, _COLUMNS, row, col, code, color, state);
-    };
 
-    this.writeLine = function (
-      line,
-      col,
-      text,
-      color = _defaultColor,
-      modifiers
+    constructor(
+      onDataHandler = (data) => {},
+      onErrorHandler = (err) => console.error('Error:', err),
+      defaultColor = colors.white,
+      charaterMap
     ) {
-      writeLine(
-        _textBuffer,
-        _ROWS,
-        _COLUMNS,
-        _characterMap,
-        line,
-        col,
-        text,
-        color,
-        modifiers
-      );
-    };
+      // Find the device
+      let _device = initDevice(PID.captain);
 
-    this.scrollUp = () => {
-      vScrollDisplayUp(_textBuffer, _ROWS);
-    };
-    this.scrollDown = () => {
-      vScrollDisplayDown(_textBuffer, _ROWS);
-    };
+      if (!_device) {
+        throw new Error('Device not found.');
+      }
 
-    // Method to handle Led status
-    this.setLed = function (led) {
-      _ledStatus |= led;
-    };
+      _display = new Display(_device);
+      _cduLeds = new CDULeds(_device);
 
-    this.toggleLed = function (led) {
-      _ledStatus ^= led;
-    };
+      _display.setCharacterMap(charaterMap);
+      _display.setDefaultColor(defaultColor);
+      _display.clearScreen();
 
-    this.resetLeds = function (led) {
-      _ledStatus &= ~led;
-    };
+      // set the default refresh rate to 250 ms
+      displayInterval = setInterval(() => {
+        _display.updateScreen();
+      }, 250);
 
-    this.close = () => {
-      clearInterval(displayInterval);
-      clearInterval(ledInterval);
+      // set the default refresh rate to 100 ms
+      ledInterval = setInterval(() => {
+        _cduLeds.updateLedsAndBrighness();
+      }, 100);
 
-      _device.removeAllListeners();
+      _device.on('error', onErrorHandler);
 
-      _device.close();
-    };
+      if (onDataHandler) {
+        _device.on('data', (data) => {
+          // data is the new state of the keys
+
+          onDataHandler(readKeypress(data), this);
+        });
+      }
+      this.getDeviceInfo = () => _device.getDeviceInfo();
+      this.getDisplay = () => _display;
+      this.getLeds = () => _cduLeds;
+
+      /**
+       *
+       * @param {int} ms display refresh rate in ms
+       */
+      this.setDisplayRate = (ms) => {
+        clearInterval(displayInterval);
+        displayInterval = setInterval(() => {
+          _display.updateScreen();
+        }, ms);
+      };
+
+      /**
+       * @param {int} ms led refresh rate in ms
+       */
+      this.setLedRate = (ms) => {
+        clearInterval(ledInterval);
+        ledInterval = setInterval(() => {
+          _cduLeds.updateLedsAndBrighness();
+        }, ms);
+      };
+
+      this.close = () => {
+        clearInterval(displayInterval);
+        clearInterval(ledInterval);
+
+        _device.removeAllListeners();
+
+        _device.close();
+      };
+    }
   }
   return CDU;
 })();
