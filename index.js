@@ -28,13 +28,14 @@ export const CDU = (() => {
      */
 
     constructor(
+      captain = true,
       onDataHandler = (data) => {},
       onErrorHandler = (err) => console.error('Error:', err),
       defaultColor = colors.white,
       charaterMap
     ) {
       // Find the device
-      let _device = initDevice(PID.captain);
+      let _device = initDevice(captain ? PID.captain : PID.copilot);
 
       if (!_device) {
         throw new Error('Device not found.');
