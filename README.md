@@ -71,6 +71,7 @@ const onKeyPressHandler = (keyPressed, cdu) => {
 };
 
 const cdu = new CDU(
+  true, // captain side
   onKeyPressHandler, // handler for keypress
   (err) => console.error('Error:', err), // error handler
   colors.green // default color is white if not provided
@@ -141,7 +142,9 @@ you can with but it's useless ( or just to get device info)
 ### getDeviceInfo()
 
 ```javascript
+// default in captain mode
 const cdu = new CDU();
+// const cdu = new CDU(false); // copilot mode
 // displays manufacturer, product,serial number
 console.log(cdu.getDeviceInfo());
 ```
@@ -180,6 +183,7 @@ const onKeyPressHandler = (keyPressed) => {
 };
 
 const cdu = new CDU(
+  true, // captain side
   onKeyPressHandler, // handler for keypress
   (err) => console.error('Error:', err), // error handler
   colors.green // default color is white if not provided
@@ -209,6 +213,7 @@ const onKeyPressHandler = (keyPressed, cdu_instance) => {
 };
 
 const cdu = new CDU(
+  true, // captain side
   onKeyPressHandler // handler for keypress
 );
 ```
@@ -310,6 +315,7 @@ const customCharacterMap = {
 };
 
 const display = new CDU(
+  true, // captain side
   onKeyPressHandler, // handler for keypress
   (err) => console.error('Error:', err), // error handler
   colors.green, // default color is white if not provided
