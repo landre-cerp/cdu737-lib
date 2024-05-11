@@ -29,6 +29,9 @@ npm install cdu737
 [See Wiki](https://github.com/landre-cerp/cdu737-lib/wiki)
 for more information about the device and the display capabilities.
 
+You can find examples of usage here
+https://github.com/landre-cerp/cdu737-lib-examples
+
 ```javascript
 /**
  * In this example,
