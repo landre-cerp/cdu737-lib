@@ -31,11 +31,12 @@ To get started with development:
 
 1. Clone the repository: `git clone git@github.com:landre-cerp/cdu737-lib.git`
 2. Install project dependencies: `npm install`
-3. Begin development: Write your code and make sure to update tests.
+3. Begin development: Write your code !
 
 ## Testing
 
 to be done, but for example, testing in CI would be limited as it requires a physical device to be connected to the computer.
+You can use this project as a bootstrapper https://github.com/landre-cerp/cdu737-lib-examples
 
 ## License
 
