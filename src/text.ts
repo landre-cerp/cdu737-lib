@@ -1,4 +1,4 @@
-export const cdu_chars = {
+export const cdu_chars: Record<string, number> = {
   Space: 0,
   Lower: 0x01,
   Greater: 0x02,
@@ -65,12 +65,16 @@ export const cdu_chars = {
   Z: 0x3f,
 };
 
-export const modifiers = {
+export type modifier = 'inverted' | 'big';
+
+export const modifiers: Record<modifier, number> = {
   inverted: 1 << 7,
   big: 1 << 6,
 };
 
-export const defaultCharacterMap = {
+export type CduCharMap = Record<string | number, number>;
+
+export const defaultCharacterMap: CduCharMap = {
   ' ': cdu_chars.Space,
   '<': cdu_chars.Lower,
   '>': cdu_chars.Greater,
@@ -150,27 +154,10 @@ export const defaultCharacterMap = {
   Z: cdu_chars.Z | modifiers.big,
 };
 
-export const map_chars = (str, mapper) => {
+export const map_chars = (str: string, mapper: CduCharMap) => {
   let result = [];
   for (let i = 0; i < str.length; i++) {
     result.push(mapper[str[i]]);
   }
   return result;
-};
-
-export const Encode2Chars = (char1, char2) => {
-  // encode 2 consecutive chars
-  // respecting the HIDreport structure
-  // Simply put two consecutive chars are encoded that way.
-  // Assume they both are 0x47 0x47  (which is a dash '-')
-  // red is 0x03 green is 0x02
-  //  => 0x47 0x7(seven of the 0x47 second char)(col1=3) 0x(col2=2)4(four of the 47 2nd char)
-
-  // method returns => 0x47 0x73 0x24
-
-  let encoded = new Uint8Array(3);
-  encoded[0] = char1.code;
-  encoded[1] = (char2.code << 4) | char1.color;
-  encoded[2] = (char2.code >> 4) | (char2.color << 4);
-  return encoded;
 };

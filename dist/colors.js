@@ -1,0 +1,13 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.colors = void 0;
+exports.colors = {
+    white: 0b000,
+    cyan: 0b001,
+    green: 0b010,
+    purple: 0b011,
+    yellow: 0b100,
+    red: 0b101,
+    blue: 0b110,
+    dark_green: 0b111,
+};

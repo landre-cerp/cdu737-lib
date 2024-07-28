@@ -3,12 +3,13 @@
   "version": "0.6.0",
   "author": "Laurent Andre <laurent.and@gmail.com>",
   "description": "Library to interact with Cockpitmaster CDU737",
-  "main": "index.js",
+  "main": "./dist/index.ts",
   "type": "module",
   "exports": {
-    ".": "./index.js"
+    ".": "./dist/index.js"
   },
   "scripts": {
+    "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,5 +24,8 @@
   "dependencies": {
     "node-hid": "^3.1.0",
     "usb": "^2.13.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.5.4"
   }
 }
