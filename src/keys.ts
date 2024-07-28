@@ -4,6 +4,10 @@ export type Key = {
   label: string;
 };
 
+export type KeyPressHandler = (keyPressed: KeyPresses) => void;
+export type ErrorHandler = (err: Error) => void;
+
+
 export const cduKeys: { [key: string]: Key } = {
   RSK1: { group: 1, bit: 1 << 7, label: 'RSK1' } as Key,
   RSK2: { group: 1, bit: 1 << 6, label: 'RSK2' } as Key,

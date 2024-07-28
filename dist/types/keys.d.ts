@@ -3,6 +3,8 @@ export type Key = {
     bit: number;
     label: string;
 };
+export type KeyPressHandler = (keyPressed: KeyPresses) => void;
+export type ErrorHandler = (err: Error) => void;
 export declare const cduKeys: {
     [key: string]: Key;
 };

@@ -1,25 +1,21 @@
 import { Color, colors } from './colors';
-import { KeyPresses, readKeypress, usbRead } from './keys';
+import { ErrorHandler, KeyPresses, KeyPressHandler, readKeypress, usbRead } from './keys';
 import { initDevice, PIDS } from './device';
 import { CDULeds } from './leds.js';
 import { Display } from './display';
 import { CduCharMap } from './text';
 import { HID } from 'node-hid';
 
-
 export { colors } from './colors';
 export { cdu_chars, modifiers } from './text';
 export type { Color } from './colors';
 export type { CduCharMap } from './text';
-export type { KeyPresses } from './keys';
+export type { KeyPresses, KeyPressHandler, ErrorHandler } from './keys';
 export { LED } from './leds';
 export { Display } from './display';
 export { CDULeds } from './leds';
 
 
-
-export type KeyPressHandler = (keyPressed: KeyPresses) => void;
-export type ErrorHandler = (err: Error) => void;
 
 export class CDU {
 
