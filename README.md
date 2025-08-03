@@ -16,6 +16,10 @@ Keep in mind that the device is limited in displayable chars.
 
 See [CDU 737 Wiki](https://github.com/landre-cerp/cdu737-lib/wiki) for more details.
 
+Principles of communications with the device applied to DCS Bios 
+
+[![A10C with CDU](https://img.youtube.com/vi/kSMwf8sg_Ro/0.jpg)](https://www.youtube.com/watch?v=kSMwf8sg_Ro)
+
 ## Installation
 
 in your project folder:
